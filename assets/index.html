@@ -1,0 +1,202 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Tech Talks &mdash; Copenhagen</title>
+        <script>
+            var preventSubmit = true;
+
+            function createInput(placeholder, name, type, parentE) {
+                var wrapper = document.createElement("div");
+                wrapper.className = "input-wrapper fade-in";
+
+                var input = document.createElement("input");
+                input.type = type;
+                input.name = name;
+                input.required = true;
+                input.setAttribute("placeholder", placeholder);
+
+                wrapper.appendChild(input);
+                parentE.appendChild(wrapper);
+
+                return input;
+            }
+
+            function createNode() {
+                var form = document.getElementById('nomination-form');
+
+                var subject = createInput("Subject", "subject", "text", form);
+                subject.focus();
+
+                createInput("Your name", "nominator", "text", form);
+
+                var submit = document.createElement("input");
+                submit.type = "submit";
+                submit.className = "fade-in";
+                form.appendChild(submit);
+            }
+
+            function processForm(e) {
+                if (preventSubmit == false) {
+                    document.getElementById('nomination-form').submit();
+                    return true;
+                }
+
+                preventSubmit = false;
+                createNode();
+
+                return false;
+            }
+
+            function loadNominations() {
+                var req = new XMLHttpRequest();
+
+                req.onreadystatechange = function() {
+                    if (req.readyState == XMLHttpRequest.DONE) {
+                        if (req.status == 200) {
+                            var data = JSON.parse(req.responseText);
+                            showNominations(data);
+                        } else {
+                            alert("Something went wrong!");
+                        }
+                    }
+                };
+
+                req.open("GET", "/api/nominations", true);
+                req.send();
+            }
+
+            function showNominations(nominations) {
+                var table = document.getElementById("nominations");
+
+                for (var i = 0; i < nominations.length; i += 1) {
+                    var nomination = nominations[i];
+                    var row = table.insertRow(-1);
+
+                    var subject = row.insertCell(-1);
+                    subject.innerHTML = nomination.subject;
+
+                    var nominee = row.insertCell(-1);
+                    nominee.innerHTML = nomination.nominee;
+
+                    var nominator = row.insertCell(-1);
+                    nominator.innerHTML = nomination.nominator;
+
+                    var votes = row.insertCell(-1);
+                    votes.innerHTML = "<td><button>👍 " + nomination.votes + "</button></td>";
+                }
+            }
+        </script>
+    </head>
+
+    <style>
+        h1, h2, h3, h4, h5, h6 {
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-weight: 400;
+            margin: 10px 0;
+        }
+
+        body {
+            width: 1000px;
+            margin: 64pt auto;
+        }
+
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #ccc;
+        }
+
+        tbody {
+            display: table-row-group;
+            vertical-align: middle;
+            border-top-color: inherit;
+            border-bottom-color: inherit;
+            border-left-color: inherit;
+            border-right-color: inherit;
+            border-width: 1px;
+        }
+
+        tr {
+            display: table-row;
+            vertical-align: inherit;
+            border-top-color: inherit;
+            border-right-color: inherit;
+            border-bottom-color: inherit;
+            border-left-color: inherit;
+            height: 36px;
+        }
+
+        th, td {
+            border-bottom: 1px solid #ccc;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            font-weight: bold;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f1f1f1;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-wrapper {
+            padding: 0 15px;
+            border: 1px solid #ccc;
+            margin-bottom: 4px;
+        }
+
+        input {
+            height: 36px;
+            width: 100%;
+            outline: 0;
+            display: block;
+            padding: 0;
+            position: relative;
+            border: none;
+            z-index: 1;
+        }
+
+        button {
+            height: 26px;
+        }
+
+        @keyframes fadein {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @-webkit-keyframes fadein {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadein 0.5s ease-out;
+            -webkit-animation: fadein 0.5s ease-out;
+        }
+    </style>
+
+    <body onload="loadNominations();">
+        <h2>Tech Talk Nominations</h2>
+        <form id="nomination-form" method="post" onsubmit="return processForm()">
+            <div class="input-wrapper">
+                <input type="text" placeholder="Nominate someone" name="nominee">
+            </div>
+        </form>
+        <table id="nominations">
+            <tr>
+                <th>Subject</th>
+                <th>Nominee</th>
+                <th>Nominator</th>
+                <th>Votes</th>
+            </tr>
+        </table>
+    </body>
+</html>
