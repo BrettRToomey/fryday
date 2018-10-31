@@ -95,6 +95,25 @@ int nominations(struct http_request *req) {
         goto out;
     }
 
+    if (req->method == HTTP_METHOD_POST) {
+        http_populate_qs(req);
+
+        char *id = NULL;
+        Get("id", &id);
+        if (id) {
+            if (!kore_pgsql_query_params(
+                &sql,
+                "UPDATE nominations SET votes = votes + 1 WHERE id = $1",
+                1, 1,
+                id, 0, 0
+            )) {
+
+                kore_pgsql_logerror(&sql);
+                goto out;
+            }
+        }
+    }
+
     if (!kore_pgsql_query(&sql, "SELECT * FROM nominations ORDER BY votes DESC;")) {
         kore_pgsql_logerror(&sql);
         goto out;

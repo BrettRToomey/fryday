@@ -47,22 +47,43 @@
                 return false;
             }
 
-            function loadNominations() {
+            function ajax(method, url, callback, data = null) {
                 var req = new XMLHttpRequest();
 
                 req.onreadystatechange = function() {
                     if (req.readyState == XMLHttpRequest.DONE) {
-                        if (req.status == 200) {
-                            var data = JSON.parse(req.responseText);
-                            showNominations(data);
-                        } else {
-                            alert("Something went wrong!");
-                        }
+                        callback(req);
                     }
                 };
 
-                req.open("GET", "/api/nominations", true);
-                req.send();
+                req.open(method, url, true);
+                req.send(data);
+            }
+
+            function loadNominations() {
+                ajax("GET", "/api/nominations", function(response) {
+                    if (response.status == 200) {
+                        var data = JSON.parse(response.responseText);
+                        showNominations(data);
+                    } else {
+                        alert("Something went wrong!");
+                    }
+                });
+            }
+
+            function second(nomination) {
+                ajax("POST", "/api/nominations?id=" + nomination.id, function(response) {
+                    if (response.status == 200) {
+                        var data = JSON.parse(response.responseText);
+                        for (var i = 0; i < data.length; i += 1) {
+                            var nomination = data[i];
+                            var button = document.getElementById(nomination.id);
+                            if (button) {
+                                button.innerHTML = "👍 " + nomination.votes;
+                            }
+                        }
+                    }
+                });
             }
 
             function showNominations(nominations) {
@@ -82,7 +103,7 @@
                     nominator.innerHTML = nomination.nominator;
 
                     var votes = row.insertCell(-1);
-                    votes.innerHTML = "<td><button>👍 " + nomination.votes + "</button></td>";
+                    votes.innerHTML = "<td><button onclick=\"return second(this)\" id=\"" + nomination.id + "\">👍 " + nomination.votes + "</button></td>";
                 }
             }
         </script>
